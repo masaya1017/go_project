@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"go_project/lib"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -12,7 +13,7 @@ func main() {
 	router.HandleFunc("/", HomeHandler)
 	// パスパラメータを受け取り、それを表示するエンドポイント
 	router.HandleFunc("/hello/{name}", NameHandler)
-	router.HandleFunc("/products", ProductsHandler)
+	router.HandleFunc("/json", SearchHandler)
 	router.HandleFunc("/articles", ArticlesHandler)
 	http.Handle("/", router)
 	http.ListenAndServe(":8080", nil)
@@ -38,12 +39,36 @@ func NameHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Home Page")
+func SearchHandler(w http.ResponseWriter, r *http.Request) {
+	// テスト用のJSONファイル
+	filename := "data/sample.json"
+	found := false
+	// クエリパラメータを取得する(挨拶のメッセージを取得する)
+	queryParams := r.URL.Query()
+	searchName := queryParams.Get("name")
+
+	// JSONファイルをパースして構造体にマッピング
+	result, err := lib.ParseJSONFile(filename)
+	if err != nil {
+		fmt.Fprintf(w, "Unexpected error: %v", err) // エラーメッセージをクライアントに返す
+		return
+	}
+	// マッピングされた結果をログに出力
+	for _, person := range result {
+		if person.Name == searchName {
+			found = true
+			fmt.Fprintf(w, "Age: %v", person.Age)
+			fmt.Fprintf(w, "Address: %v", person.Address)
+		}
+	}
+	// 検索結果が見つからなかった場合のメッセージをクライアントに返す
+	if !found {
+		fmt.Fprintf(w, "Person with name '%s' not found\n", searchName)
+	}
 }
 
-func ProductsHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Products Page2")
+func HomeHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Home Page")
 }
 
 func ArticlesHandler(w http.ResponseWriter, r *http.Request) {
