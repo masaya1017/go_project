@@ -51,4 +51,12 @@
 - setされているKeyを確認する方法
   - KEYS *
 
+# goとsqliteの連携
+- GORMのインストール
+  - go get -u gorm.io/gorm
+  - go get -u gorm.io/driver/sqlite
+
+
+
+
 
