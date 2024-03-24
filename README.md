@@ -39,3 +39,13 @@
 - go test -v
   - [-v]をつけないとテストログが出力されないので注意する
 
+# goとredisの連携
+- サーバの立ち上げ
+  - redis-server
+- クライアント接続
+　- redis-cli
+- 値の設定,取得,削除,更新
+  - SET mykey "hello"
+  - GET mykey
+  - DEL mykey
+
