@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"go_project/lib"
 	"net/http"
+	"strconv"
 
+	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -14,9 +18,58 @@ func main() {
 	// パスパラメータを受け取り、それを表示するエンドポイント
 	router.HandleFunc("/hello/{name}", NameHandler)
 	router.HandleFunc("/json", SearchHandler)
-	router.HandleFunc("/articles", ArticlesHandler)
+	router.HandleFunc("/redis", GetRedisHandler).Methods("GET")
 	http.Handle("/", router)
 	http.ListenAndServe(":8080", nil)
+}
+
+func GetRedisHandler(w http.ResponseWriter, r *http.Request) {
+	//redisの処理を実施
+	// クエリパラメータを取得する(挨拶のメッセージを取得する)
+	queryParams := r.URL.Query()
+	name := queryParams.Get("name")
+	age := queryParams.Get("age")
+	address := queryParams.Get("address")
+
+	// Redisとの接続設定
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379", // Redisのアドレス
+		Password: "",               // Redisのパスワード
+		DB:       0,                // 使用するデータベース番号
+	})
+
+	// コンテキスト
+	ctx := context.Background()
+
+	ageq, err := strconv.Atoi(age)
+
+	id := uuid.New()
+
+	// UUIDを文字列に変換
+	idString := id.String()
+	fmt.Println("id:", idString)
+
+	// JSONデータ
+	userData := lib.User{
+		Name:    name,
+		Age:     ageq,
+		Address: address,
+	}
+
+	// JSONデータをRedisに登録
+	err = lib.SetJSONDataToRedis(ctx, rdb, idString, userData)
+	if err != nil {
+		panic(err)
+	}
+
+	// RedisからJSONデータを取得
+	var retrievedUser lib.User
+	err = lib.GetJSONDataFromRedis(ctx, rdb, idString, &retrievedUser)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Fprint(w, "Redis Data:", retrievedUser)
+
 }
 
 func NameHandler(w http.ResponseWriter, r *http.Request) {
@@ -69,8 +122,4 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Home Page")
-}
-
-func ArticlesHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Articles Page")
 }

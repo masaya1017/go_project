@@ -48,4 +48,7 @@
   - SET mykey "hello"
   - GET mykey
   - DEL mykey
+- setされているKeyを確認する方法
+  - KEYS *
+
 
